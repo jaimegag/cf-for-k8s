@@ -1,0 +1,64 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
+
+#@ def uaa_values():
+database:
+  scheme: #@ data.values.uaa.database.scheme
+  address: #@ data.values.capi.database.host
+  port: #@ data.values.capi.database.port
+  name: #@ data.values.uaa.database.name
+  username: #@ data.values.uaa.database.username
+  password: #@ data.values.uaa.database.password
+
+#! TODO: figure out how to generate signing keys for the UAA
+#@ end
+
+#@ def uaa_config():
+#@overlay/match missing_ok=True
+scim:
+  userids_enabled: true
+  users:
+  #! TODO: interpolate CF admin password
+  - admin|{{ .Values.cf_admin_password }}|admin@admin.tld|first|last|clients.read,cloud_controller.admin,doppler.firehose,network.admin,openid,routing.router_groups.read,routing.router_groups.write,scim.read,scim.write|uaa
+  groups:
+    zones.read: Read identity zones
+    zones.write: Create and update identity zones
+    idps.read: Retrieve identity providers
+    idps.write: Create and update identity providers
+    clients.admin: Create, modify and delete OAuth clients
+    clients.write: Create and modify OAuth clients
+    clients.read: Read information about OAuth clients
+    clients.secret: Change the password of an OAuth client
+    scim.write: Create, modify and delete SCIM entities, i.e. users and groups
+    scim.read: Read all SCIM entities, i.e. users and groups
+    scim.create: Create users
+    scim.userids: Read user IDs and retrieve users by ID
+    scim.zones: Control a user's ability to manage a zone
+    scim.invite: Send invitations to users
+    password.write: Change your password
+    oauth.approval: Manage approved scopes
+    oauth.login: Authenticate users outside of the UAA
+    openid: Access profile information, i.e. email, first and last name, and phone number
+    groups.update: Update group information and memberships
+    uaa.user: Act as a user in the UAA
+    uaa.resource: Serve resources protected by the UAA
+    uaa.admin: Act as an administrator throughout the UAA
+    uaa.none: Forbid acting as a user
+    uaa.offline_token: Allow offline access
+#@ end
+
+#@ def overlay_uaa_config(old, new):
+#@ return overlay.apply(yaml.decode(old), uaa_config())
+#@ end
+
+#@ uaa = library.get("github.com/cloudfoundry/uaa")
+--- #@ template.replace(uaa.with_data_values(uaa_values()).eval())
+
+#@overlay/match by=overlay.subset({"kind":"ConfigMap", "metadata":{"name":"uaa-config"}})
+---
+data:
+  #@overlay/replace via=overlay_uaa_config
+  uaa.yml:

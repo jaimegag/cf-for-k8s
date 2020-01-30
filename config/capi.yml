@@ -1,7 +1,6 @@
 #@ load("@ytt:data", "data")
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
-#@ load("@ytt:overlay", "overlay")
 
 #@ def capi_values():
 #@ if/end data.values.images.capi:

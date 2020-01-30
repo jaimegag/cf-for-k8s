@@ -43,6 +43,12 @@ system_certificate:
   ca: "" #! Base64-encoded CA certificate used to sign the system certifcate
 
 uaa:
+  database:
+    scheme: ""
+    name: ""
+    username: ""
+    password: ""
+
   admin_client_secret: "" #! client secret for uaa admin client in plain text
   certificate:
     crt: "" #! Base64-encoded certificate for the uaa service inside the kubernetes cluster (i.e., CN=uaa.cf-system.svc.cluster.local)
